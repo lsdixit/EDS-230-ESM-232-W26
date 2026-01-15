@@ -1,0 +1,25 @@
+---
+title: "solarpvtest"
+format: html
+---
+
+Exploring and testing the solar photovoltaic model.
+
+Load libraries
+```{r}
+library(tidyverse)
+library(here)
+```
+
+Load data
+```{r}
+load(file = (here("Data", "sierraczosolar.rda")))
+```
+
+run model with sierra data
+```{r}
+solarpv(area = 0.1, 
+        solar = sierraczosolar,
+        eff = 0.6, clr = "green", eunit = "kW", g = FALSE)
+```
+
