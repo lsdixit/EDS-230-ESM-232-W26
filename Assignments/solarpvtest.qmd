@@ -23,3 +23,19 @@ solarpv(area = 0.1,
         eff = 0.6, clr = "green", eunit = "kW", g = FALSE)
 ```
 
+```{r}
+eff <- rnorm(mean = 0.6, sd = 0.1, n = 20)
+
+site2 <- eff %>% map(~ solarpv(area = 0.1, 
+                               solar = sierraczosolar, clr = "green",
+                               eunit = "kWhr", g = FALSE, etype = "direct", 
+                               eff = .x))
+
+site2[[18]]$mean
+```
+```{r}
+tmp <- map_dfr(site2, `[`, c("annual"))
+
+site2df <- data.frame(year = tmp$annual$year, elect = tmp$annual$elect)
+```
+

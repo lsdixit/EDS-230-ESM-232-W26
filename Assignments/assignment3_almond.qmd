@@ -1,0 +1,10 @@
+---
+title: "assignment3_almond"
+format: html
+---
+
+# load libraries
+```{r}
+library(tidyverse)
+```
+
