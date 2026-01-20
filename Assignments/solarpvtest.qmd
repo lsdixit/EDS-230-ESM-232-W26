@@ -39,3 +39,12 @@ tmp <- map_dfr(site2, `[`, c("annual"))
 site2df <- data.frame(year = tmp$annual$year, elect = tmp$annual$elect)
 ```
 
+```{r}
+thresh_test <- rnorm(mean = 10000, sd = 2000, n = 20)
+
+test4 <- thresh_test %>% map(~ solarpv(area = 0.1, 
+                               solar = sierraczosolar, clr = "green",
+                               eunit = "kWhr", g = FALSE, etype = "direct", 
+                               ethresh = .x))
+```
+

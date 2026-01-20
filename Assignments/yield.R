@@ -15,11 +15,7 @@
 #' yield(A = 1.5, H = 1000)
 
 
-yield <- function(A, H) {
-  # define constant parameters
-  r <- 0.2 
-  PR <- 0.75
-  
+yield <- function(A, H, r = 0.2, PR = 0.75) {
   # define energy production equation
   energy = A * r * H * PR
   return(energy)

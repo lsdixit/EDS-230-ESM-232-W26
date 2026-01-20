@@ -1,10 +1,67 @@
 ---
 title: "assignment3_almond"
 format: html
+editor_options: 
+  chunk_output_type: console
 ---
 
 # load libraries
 ```{r}
 library(tidyverse)
+library(here)
 ```
+
+Load data
+```{r}
+climate <- read.table(here("Data", "clim.txt"), header = TRUE)
+```
+
+clean data
+```{r}
+climate_clean <- climate %>% 
+  group_by(month, year) %>% 
+  summarise(tmin_c = mean(tmin_c),
+            precip = mean(precip)) %>% 
+  ungroup()
+
+climate_test <- climate %>% 
+  select(day, month, wy, tmin_c, precip)
+```
+
+Build model
+```{r}
+tmin_feb <- climate_test %>% 
+  filter(month == 2) %>% 
+  pull(tmin_c)
+precip_jan <- climate_test %>% 
+  filter(month == 1) %>% 
+  pull(precip)
+
+almond_model <- function(tmin_feb, precip_jan) {
+  yield = -0.015*tmin_feb - 0.0046 * (tmin_feb)^2 - 0.07 * precip_jan + 0.0043 * (precip_jan)^2 + 0.28
+}
+```
+
+test model
+```{r}
+test1 <- almond_model(0, 0)
+
+test1
+
+test2 <- almond_model(0,10)
+test2
+
+max(tmin_feb)
+max(precip_jan)
+
+test3 <- almond_model(12.58627, 21.82297)
+test3
+```
+run the model
+```{r}
+model <- almond_model(tmin_feb = tmin_feb, precip_jan = precip_jan)
+
+model
+```
+
 
