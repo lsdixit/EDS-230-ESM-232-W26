@@ -1,0 +1,38 @@
+---
+title: "assignment4-almond_sensitivity"
+format: html
+---
+
+```{r}
+climate <- read.table(here("Data", "clim.txt"), header = TRUE)
+```
+
+```{r}
+inputs <- tibble(tmin_feb, precip_jan)
+```
+
+```{r}
+source(here("R/almond_yield.R"))
+source(here("R/profit.R"))
+```
+
+```{r}
+tmin_feb <- climate %>% 
+  group_by(year) %>% 
+  filter(month == 2) %>% 
+  summarise(tmin_c = min(tmin_c)) %>% 
+  pull(tmin_c)
+# This model only pulls precipitation from January
+precip_jan <- climate %>% 
+  group_by(year) %>% 
+  filter(month == 1) %>% 
+  summarise(precip = sum(precip)) %>% 
+  pull(precip)
+```
+
+```{r}
+yield <- almond_yield(tmin_feb = tmin_feb, precip_jan = precip_jan)
+profit <- profit(yield = yield)
+profit
+```
+
