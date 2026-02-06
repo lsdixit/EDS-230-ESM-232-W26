@@ -32,5 +32,6 @@ compute_almond_yield <- function(clim, Tmincoeff1 = -0.015, Tmincoeff2 = -0.0046
     Tmincoeff1 * Feb_minT + Tmincoeff2 * Feb_minT**2 +
     Pcoeff1 * Jan_P + Pcoeff2 * Jan_P**2 + intercep
 
-  return(list(maxyield = max(yield), minyield = min(yield), meanyield = mean(yield)))
+  #return(list(maxyield = max(yield), minyield = min(yield), meanyield = mean(yield)))
+  return(meanyield = mean(yield))
 }
