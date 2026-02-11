@@ -1,13 +1,11 @@
 ---
 title: "Sobol Sensitivity Analysis Assignment"
-output:
-  pdf_document: default
-  html_document: default
+output: pdf
 ---
 
 *Assignment Part I*
 
-Choose one of the 3 papers below that provide an example of sensitivity analysis of model parameters. *Or* find another paper that uses model sensitivity analysis as part of understanding an enviromental topic
+Choose one of the 3 papers below that provide an example of sensitivity analysis of model parameters. *Or* find another paper that uses model sensitivity analysis as part of understanding an environmental topic.
 
 After going through the paper, write a paragraph describing how results of the sensitivity analysis reported on in the paper might contribute to understanding (or prediction) within an environmental problem solving or management context.
 
@@ -17,7 +15,9 @@ Building Cooling Energy Mdoel
 
 Uranium in Groundwater Model
 
-Answer:
+Answer: In the snow modeling paper, the authors conducted a sobol sensitivity analysis on snowmelt-based hydrological systems. They conducted this sensitivity analysis on two different snow models, one physically-based and another conceptual degree-day model. They found both models produced relatively similar results, however the conceptual degree-day model lacked sensitivity to climate warming parameters, and the authors suggest that model is less reliable for future model development and management activities.
+
+Sensitivity analysis, in this context, can heavily influence management practices as it can indicate which model is most appropriate for certain management contexts. Sobol can also specifically determine how much variability the model output is dependent on each individual or interactive parameter's variance, which can contribute to understanding the system for scientific understanding, conservation, policy, or management needs, (for example, how much of snowmelt is due to climate change). A model's insensitivity to climate change could indicate that the system in question is resilient to future climate change, or that the model is not appropriate and would require more testing or a different model.
 
 *Assignment Part 2*
 
@@ -57,17 +57,111 @@ For vegetation height assume that height is somewhere between 3.5 and 5.5 m (but
 
 For the $k_d$ and $k_0$ parameters you can assume that they are normally distributed with standard deviation of 1% of their default values
 
+```{r}
+library(tidyverse)
+library(sensitivity)
+library(purrr)
+```
+
 Use the Sobel approach to generate parameter values for the 4 parameters
+
+```{r}
+# source the model
+source(here::here("R/Catm.R"))
+
+# decide on number of initial parameter sets
+np = 1000
+
+# generate two examples of random number from parameter distributions
+k_o = rnorm(mean = 0.1, sd = 0.001, n = np)
+k_d = rnorm(mean = 0.7, sd = 0.007, n = np)
+v = rnorm(mean = 3, sd = 0.5, n = np)
+height = runif(min = 3.5, max = 5.5, n = np)
+
+# first set call it X1
+X1 = cbind.data.frame(k_o, k_d, v, height)
+
+# repeat sampling and call it X2
+k_o = rnorm(mean = 0.1, sd = 0.001, n = np)
+k_d = rnorm(mean = 0.7, sd = 0.007, n = np)
+v = rnorm(mean = 3, sd = 0.5, n = np)
+height = runif(min = 3.5, max = 5.5, n = np)
+X2 = cbind.data.frame(k_o, k_d, v, height)
+
+# run sobolSalt function giving it X1 and X2 and save result
+sens_Catm_Sobol = sobolSalt(model = NULL, X1, X2, nboot = 100)
+```
 
 Run the atmospheric conductance model for these parameters
 
+```{r}
+# pull out parameter values into a new data frame
+parms <-  as.data.frame(sens_Catm_Sobol$X)
+
+# give parameters names
+colnames(parms) <-  colnames(X1)
+names(parms)
+
+# run the Catm model for all parmeter sets and save results
+res <-  pmap_dbl(parms, Catm)
+```
+
+Estimate the Sobol Indices for your output
+
+```{r}
+# now tell our orginal Sobol object about the results.   
+sens_Catm_Sobol = sensitivity::tell(sens_Catm_Sobol, res, res.names = "gs")
+names(sens_Catm_Sobol)
+
+# useful to add names (by row)
+row.names(sens_Catm_Sobol$S) = colnames(parms)
+sens_Catm_Sobol$S
+
+# look at results
+# main effect (S):  partitions variance (main effect without co-variance) - sums approximately to one
+sens_Catm_Sobol$S
+
+# total effect (T) - accounts for parameter interactions
+row.names(sens_Catm_Sobol$T) = colnames(parms)
+sens_Catm_Sobol$T
+
+# Both the main effect and total effect can tell us something about how the parameter influences results
+print(sens_Catm_Sobol)
+```
+
 Plot conductance estimates in a way that accounts for parameter uncertainty
+
+```{r}
+# first combine parameters and output
+both <- cbind.data.frame(parms, gs = sens_Catm_Sobol$y)
+
+# look at overall gs sensitivity to all parameter variation
+ggplot(both, aes(x = gs)) +
+  geom_histogram(fill = "cornflowerblue") +
+  theme_minimal() +
+  labs(x = "Atmospheric Conductance",
+       y = "Frequency", 
+       title = "Overall Atmospheric Conductance Sobol Sensitivity")
+```
 
 Plot conductance estimates against windspeed use the parameter that is 2nd in terms of total effect on response
 
-Estimate the Sobel Indices for your output
+```{r}
+# look at response of conductance to the two most important variables choose 
+# second 'most important" as color
+ggplot(both, aes(v, gs, col = height)) + 
+  geom_point() +
+  viridis::scale_color_viridis(discrete = FALSE) +
+  theme_minimal() +
+  labs(x = "Windspeed (m/s)", 
+       y = "Atmospheric Conductance",
+       col = "Vegetation Height (cm)",
+       title = "Sobol Sensitivity Analysis Results")
+```
 
 Comment on what this tells you about how atmospheric conductance and its sensitivity to variation in windspeed differs in this setting as compared to the setting that we examined in class where windspeed was lower and less variable and vegetation was taller.
+
+Compared to our setting in class, we saw a higher sensitivity to windspeed from sobol sensitivity analysis when windspeed was higher and vegetation height was smaller. We also saw that most of the variation of atmospheric conductance was due to windspeed followed by vegetation height, whereas in our class model variation was due to Ko, followed by windspeed. This makes sense ecologically, as the more windspeed a location has the more evaporation will occur. Because atmospheric conductance is highly dependent on windspeed, a higher sensitivity to windspeed makes sense in a setting with higher variability in windspeed. We saw much smaller sobol indices for vegetation height in this model, which could be due to the high variability in windspeed causing more variance in conductance or the smaller variance in height causing less variability in conductance. We do, however, still see an appropriate pattern of taller vegetation causing higher atmospheric conductance.
 
 Submit a pdf or html document with your code, graphs, and answers to the questions on Canvas Due
 
